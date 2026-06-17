@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theramatch - Interactive Company Profile</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        theraPurple: '#8F00FF',
+                        theraDark: '#1E1E2F',
+                        theraLight: '#F8F9FA',
+                        theraGray: '#8A8A9E'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        display: ['Oswald', 'League Gothic', 'sans-serif'] // Matching brand guidelines context
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Styles prioritizing responsiveness and NO SVG rule */
+        body {
+            background-color: #F8F9FA;
+            color: #1E1E2F;
+        }
+        
+        /* Mandatory Chart Container Styling */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        @media (max-width: 640px) {
+            .chart-container {
+                height: 280px;
+            }
+        }
+
+        /* Interactive Elements styling */
+        .tab-btn {
+            transition: all 0.3s ease;
+        }
+        .tab-btn.active {
+            border-bottom-color: #8F00FF;
+            color: #8F00FF;
+            font-weight: 700;
+        }
+        
+        .service-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        .service-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(143, 0, 255, 0.15);
+        }
+        .service-card.active {
+            border-color: #8F00FF;
+            background-color: #f3e8ff; /* Light purple tint */
+        }
+
+        /* CSS-only step indicator (NO SVG) */
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #6b7280;
+            transition: all 0.4s ease;
+        }
+        .step-item:hover .step-circle {
+            background-color: #8F00FF;
+            color: white;
+            box-shadow: 0 0 15px rgba(143,0,255,0.4);
+        }
+        
+        /* Smooth reveal class */
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="antialiased overflow-x-hidden font-sans selection:bg-theraPurple selection:text-white">
+
+    <!-- REQUIRED PLACEHOLDER COMMENTS -->
+    <!-- Chosen Palette: Warm Neutrals (Slate-50 background, Zinc text) with Theramatch Purple (#8F00FF) as the primary accent to maintain brand identity. -->
+    <!-- Application Structure Plan: The SPA uses a single-page interactive storytelling format. It starts with a strong Hero section to establish identity, flows into an interactive 'About & Vision' tabbed module to consolidate core text, uses a visual CSS grid for 'Why Us' to make key value props digestible, employs a Radar Chart to quantify qualitative 'Selection Standards', uses a dynamic master-detail view for 'Services' to prevent text overload, and concludes with a strong 'Partnership & CTA' section. This structure guides the user from general awareness to specific capabilities, ending with actionable contact points, prioritizing ease of consumption over a static document layout. -->
+    <!-- Visualization & Content Choices: 1. Core Text (About/Vision) -> Tabbed Interface -> Saves vertical space, encourages interaction. 2. Selection Criteria (Good Attitude, Knowledge, Skill) -> Radar Chart (Chart.js) -> Transforms text into a comparative visual showing Theramatch's rigorous standards vs industry norms. 3. Services -> Master-Detail Clickable Cards -> Keeps UI clean while allowing deep-dive into each service. 4. Recruitment Process -> HTML/CSS Timeline -> Illustrates the 'Proses Transparan' visually without SVG. Library used: Chart.js for canvas visualization. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <!-- Navigation -->
+    <nav class="fixed w-full bg-white/90 backdrop-blur-md shadow-sm z-50 border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <div class="flex-shrink-0 flex items-center gap-2">
+                    <!-- CSS Shape Logo -->
+                    <div class="w-10 h-10 bg-theraPurple rounded-lg flex items-center justify-center transform rotate-3">
+                        <span class="text-white font-display text-2xl font-bold italic">T</span>
+                    </div>
+                    <span class="font-display font-bold text-2xl tracking-wide text-theraDark uppercase">Theramatch</span>
+                </div>
+                <div class="hidden md:flex space-x-8">
+                    <a href="#about" class="text-gray-600 hover:text-theraPurple transition font-medium">Tentang</a>
+                    <a href="#why-us" class="text-gray-600 hover:text-theraPurple transition font-medium">Keunggulan</a>
+                    <a href="#services" class="text-gray-600 hover:text-theraPurple transition font-medium">Layanan</a>
+                    <a href="#contact" class="px-5 py-2 bg-theraPurple text-white rounded-full font-medium hover:bg-purple-800 transition shadow-lg shadow-purple-500/30">Kolaborasi</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="pt-32 pb-20 lg:pt-48 lg:pb-32 bg-gradient-to-br from-slate-50 to-purple-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="inline-block px-4 py-1.5 rounded-full bg-purple-100 text-theraPurple font-semibold text-sm mb-6 tracking-wide uppercase border border-purple-200">
+                Professional Recruitment Partner
+            </div>
+            <h1 class="text-5xl md:text-6xl lg:text-7xl font-display font-bold text-theraDark leading-tight mb-6">
+                Connecting Exceptional Talent <br/>
+                <span class="text-theraPurple">to Premier Brands</span>
+            </h1>
+            <p class="mt-4 max-w-2xl text-xl text-gray-600 mx-auto font-light leading-relaxed">
+                Jembatan strategis antara talenta terbaik dan perusahaan industri wellness & hospitality yang membutuhkan tenaga kerja profesional dan beretika.
+            </p>
+            <div class="mt-10 flex justify-center gap-4">
+                <a href="#services" class="px-8 py-3.5 bg-theraPurple text-white rounded-full font-semibold hover:bg-purple-800 transition shadow-xl shadow-purple-500/20">Pelajari Layanan Kami</a>
+                <a href="#contact" class="px-8 py-3.5 bg-white text-theraDark border border-gray-200 rounded-full font-semibold hover:border-theraPurple hover:text-theraPurple transition">Hubungi Kami</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Interactive About & Vision Section -->
+    <section id="about" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 reveal">
+            <!-- Section Context -->
+            <div class="mb-12 text-center max-w-3xl mx-auto">
+                <h2 class="text-3xl font-display font-bold text-theraDark mb-4">Fondasi Ekosistem Kami</h2>
+                <p class="text-gray-600">Pelajari esensi keberadaan Theramatch. Bagian ini menjelaskan identitas inti kami sebagai spesialis rekrutmen dan visi jangka panjang yang mendorong kolaborasi kami dengan berbagai brand di Indonesia.</p>
+            </div>
+
+            <div class="max-w-4xl mx-auto bg-slate-50 rounded-2xl p-2 sm:p-8 border border-gray-100 shadow-sm">
+                <!-- Tabs -->
+                <div class="flex border-b border-gray-200 mb-8">
+                    <button class="tab-btn active flex-1 py-4 text-lg font-medium border-b-4 border-transparent" onclick="switchTab('tentang')">
+                        Tentang Kami
+                    </button>
+                    <button class="tab-btn flex-1 py-4 text-lg font-medium border-b-4 border-transparent text-gray-500" onclick="switchTab('visi')">
+                        Visi Kami
+                    </button>
+                </div>
+
+                <!-- Tab Content -->
+                <div id="content-tentang" class="tab-content block animate-fade-in px-4 pb-4">
+                    <p class="text-xl text-gray-700 leading-relaxed">
+                        Theramatch adalah agensi rekrutmen terdepan yang berfokus pada industri <strong class="text-theraPurple">wellness dan hospitality</strong>. Kami hadir sebagai jembatan strategis antara talenta terbaik dan perusahaan yang membutuhkan tenaga kerja profesional, beretika, dan memiliki keterampilan tinggi.
+                    </p>
+                    <p class="mt-4 text-xl text-gray-700 leading-relaxed border-l-4 border-theraPurple pl-4 italic">
+                        "Sebagai mitra rekrutmen spesialis, kami tidak hanya mencari tenaga kerja, tetapi membangun ekosistem karier yang berkelanjutan."
+                    </p>
+                </div>
+
+                <div id="content-visi" class="tab-content hidden animate-fade-in px-4 pb-4">
+                    <div class="bg-gradient-to-r from-purple-900 to-theraDark rounded-xl p-8 text-white text-center shadow-inner">
+                        <span class="text-5xl mb-4 block">🎯</span>
+                        <h3 class="text-2xl md:text-3xl font-display font-bold leading-relaxed">
+                            "Menjadi mitra rekrutmen utama bagi berbagai brand ternama di Indonesia, melalui kolaborasi yang transparan, sistem rekrutmen yang terstandarisasi, dan komitmen untuk menciptakan peluang kerja yang memberdayakan."
+                        </h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Us & Data Visualization Section -->
+    <section id="why-us" class="py-20 bg-slate-50 border-y border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 reveal">
+            <!-- Section Context -->
+            <div class="mb-16 md:text-center max-w-3xl md:mx-auto">
+                <h2 class="text-3xl font-display font-bold text-theraDark mb-4">Mengapa Bekerja Sama dengan Kami?</h2>
+                <p class="text-gray-600">Setiap brand memiliki kebutuhan unik. Bagian ini memvisualisasikan metodologi rekrutmen kami, membandingkan standar seleksi ketat Theramatch, dan menjabarkan nilai tambah operasional kami secara interaktif.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                
+                <!-- Left: Interactive Value Props -->
+                <div class="space-y-6">
+                    <!-- HTML/CSS Diagram/List -->
+                    <div class="step-item flex gap-6 p-4 rounded-xl hover:bg-white transition cursor-default border border-transparent hover:border-purple-100 hover:shadow-md">
+                        <div class="flex-shrink-0 mt-1">
+                            <div class="step-circle text-xl">🌐</div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-bold text-theraDark mb-2">Jaringan Headhunter Luas</h4>
+                            <p class="text-gray-600">Sistem <em>freelance HR</em> dan <em>headhunter</em> yang tersebar luas, memastikan suplai kandidat yang konsisten dan berkualitas.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="step-item flex gap-6 p-4 rounded-xl hover:bg-white transition cursor-default border border-transparent hover:border-purple-100 hover:shadow-md">
+                        <div class="flex-shrink-0 mt-1">
+                            <div class="step-circle text-xl">🛡️</div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-bold text-theraDark mb-2">Standar Seleksi Ketat</h4>
+                            <p class="text-gray-600">Skrining administratif, fisik, dan pembekalan nilai krusial: <strong class="text-theraPurple">Good Attitude, Knowledge, Skill</strong>.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-item flex gap-6 p-4 rounded-xl hover:bg-white transition cursor-default border border-transparent hover:border-purple-100 hover:shadow-md">
+                        <div class="flex-shrink-0 mt-1">
+                            <div class="step-circle text-xl">🤝</div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-bold text-theraDark mb-2">Kolaborasi Multibrand</h4>
+                            <p class="text-gray-600">Bekerja sama dengan banyak brand untuk menciptakan standarisasi talenta premium di industri wellness dan hospitality.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-item flex gap-6 p-4 rounded-xl hover:bg-white transition cursor-default border border-transparent hover:border-purple-100 hover:shadow-md">
+                        <div class="flex-shrink-0 mt-1">
+                            <div class="step-circle text-xl">📊</div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-bold text-theraDark mb-2">Proses Transparan</h4>
+                            <p class="text-gray-600">Sistem pelaporan terstruktur dari pengiriman data hingga penempatan. Pantau progres hiring dengan mudah.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Chart.js Visualization -->
+                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-100 relative">
+                    <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-purple-100 rounded-full blur-2xl z-0"></div>
+                    <h3 class="text-xl font-bold text-center mb-2 relative z-10 font-display tracking-wide uppercase text-theraDark">Matriks Evaluasi Kandidat</h3>
+                    <p class="text-sm text-center text-gray-500 mb-6 relative z-10">Standar Theramatch vs. Rata-rata Industri</p>
+                    
+                    <!-- Chart Container Mandatory Implementation -->
+                    <div class="chart-container relative z-10">
+                        <canvas id="selectionRadarChart"></canvas>
+                    </div>
+                    
+                    <p class="text-xs text-center text-gray-400 mt-4 relative z-10">*Visualisasi representatif berdasarkan parameter seleksi: Good Attitude, Knowledge, dan Skill.</p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Interactive Services Section -->
+    <section id="services" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 reveal">
+            <!-- Section Context -->
+            <div class="mb-16 text-center max-w-3xl mx-auto">
+                <h2 class="text-3xl font-display font-bold text-theraDark mb-4">Layanan Rekrutmen Strategis</h2>
+                <p class="text-gray-600">Jelajahi portofolio layanan kami. Klik pada setiap kartu layanan untuk melihat detail bagaimana kami dapat menyederhanakan dan mengoptimalkan proses pemenuhan SDM di perusahaan Anda.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+                <!-- Interactive Selectors -->
+                <div class="md:col-span-5 flex flex-col gap-4">
+                    <div class="service-card active bg-white p-5 rounded-xl border border-gray-200" onclick="updateService('mass')">
+                        <div class="flex items-center gap-4">
+                            <div class="text-3xl">📈</div>
+                            <h3 class="text-lg font-bold">Mass Hiring</h3>
+                        </div>
+                    </div>
+                    <div class="service-card bg-white p-5 rounded-xl border border-gray-200" onclick="updateService('screening')">
+                        <div class="flex items-center gap-4">
+                            <div class="text-3xl">🎯</div>
+                            <h3 class="text-lg font-bold">Talent Screening</h3>
+                        </div>
+                    </div>
+                    <div class="service-card bg-white p-5 rounded-xl border border-gray-200" onclick="updateService('onboarding')">
+                        <div class="flex items-center gap-4">
+                            <div class="text-3xl">🌱</div>
+                            <h3 class="text-lg font-bold">Onboarding Support</h3>
+                        </div>
+                    </div>
+                    <div class="service-card bg-white p-5 rounded-xl border border-gray-200" onclick="updateService('strategic')">
+                        <div class="flex items-center gap-4">
+                            <div class="text-3xl">👑</div>
+                            <h3 class="text-lg font-bold">Strategic Partnership</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dynamic Content Display -->
+                <div class="md:col-span-7 bg-slate-50 rounded-2xl p-8 md:p-12 border border-gray-100 shadow-inner flex flex-col justify-center min-h-[300px]">
+                    <div id="service-display-icon" class="text-6xl mb-6">📈</div>
+                    <h3 id="service-display-title" class="text-3xl font-bold text-theraDark mb-4">Mass Hiring</h3>
+                    <div class="w-16 h-1 bg-theraPurple mb-6"></div>
+                    <p id="service-display-desc" class="text-xl text-gray-600 leading-relaxed">
+                        Penyediaan kandidat dalam jumlah besar dengan waktu yang efisien. Dirancang khusus untuk pembukaan outlet baru atau ekspansi operasional skala nasional.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Strategic Relationship & CTA -->
+    <section id="contact" class="py-24 bg-theraDark text-white relative overflow-hidden">
+        <!-- Abstract CSS Background Decoration -->
+        <div class="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-30"></div>
+        <div class="absolute bottom-0 left-0 -mb-20 -ml-20 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 reveal">
+            <!-- Section Context -->
+            <div class="mb-12">
+                <p class="text-purple-300 font-semibold tracking-wider uppercase text-sm mb-2">Hubungan Strategis & Portofolio</p>
+                <p class="text-gray-300 max-w-2xl">Bagian ini menyoroti kredibilitas kami melalui kemitraan yang telah terjalin dan mengundang brand Anda untuk menjadi bagian dari ekosistem kesuksesan Theramatch.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16">
+                <!-- Partnership Highlight -->
+                <div class="bg-white/10 backdrop-blur-lg p-8 rounded-2xl border border-white/20">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-2xl text-theraDark">🏢</div>
+                        <h3 class="text-2xl font-bold text-white">Ekosistem Puri Group</h3>
+                    </div>
+                    <p class="text-gray-200 mb-6 leading-relaxed">
+                        Saat ini, Theramatch bangga menjadi mitra resmi dalam ekosistem <strong class="text-white">Puri Group (PT Wana Arta Purna Perkasa & Delta Spa)</strong>. 
+                    </p>
+                    <p class="text-gray-300 italic text-sm">
+                        Keberhasilan kami dalam mengelola talenta untuk standar premium ini menjadi bukti nyata kompetensi kami dalam menangani rekrutmen berskala nasional.
+                    </p>
+                </div>
+
+                <!-- CTA -->
+                <div class="flex flex-col justify-center">
+                    <h2 class="text-4xl font-display font-bold mb-6">Mengapa Kami Adalah Pilihan Tepat?</h2>
+                    <p class="text-lg text-gray-300 mb-8 leading-relaxed">
+                        Kami percaya bahwa kolaborasi dengan banyak brand akan memperkuat posisi Theramatch sebagai agensi rekrutmen yang adaptif dan solutif. Kami mengundang brand Anda untuk tumbuh bersama kami melalui penyediaan SDM yang handal dan berintegritas.
+                    </p>
+                    
+                    <div class="bg-white rounded-2xl p-6 md:p-8 flex flex-col sm:flex-row items-center justify-between shadow-2xl">
+                        <div>
+                            <p class="text-sm text-gray-500 font-bold mb-1 uppercase tracking-wider">Mari berkolaborasi sekarang</p>
+                            <p class="text-2xl font-bold text-theraDark">+62 878-4966-1722</p>
+                            <p class="text-xs text-theraPurple mt-1 font-medium">Wellness & Hospitality Recruitment Experts</p>
+                        </div>
+                        <a href="https://wa.me/6287849661722" target="_blank" class="mt-4 sm:mt-0 px-8 py-4 bg-[#25D366] hover:bg-[#1ebd5b] text-white rounded-full font-bold transition flex items-center gap-2 shadow-lg shadow-green-500/30">
+                            <span class="text-xl">💬</span> Hubungi via WhatsApp
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-[#151522] py-8 text-center text-gray-400 text-sm border-t border-gray-800">
+        <p>&copy; 2026 Theramatch Recruitment Agency. All rights reserved.</p>
+    </footer>
+
+    <!-- Application Logic -->
+    <script>
+        // Data Storage for Services (Master-Detail logic)
+        const servicesData = {
+            'mass': {
+                icon: '📈',
+                title: 'Mass Hiring',
+                desc: 'Penyediaan kandidat dalam jumlah besar dengan waktu yang efisien. Dirancang khusus untuk pembukaan outlet baru atau ekspansi operasional skala nasional.'
+            },
+            'screening': {
+                icon: '🎯',
+                title: 'Talent Screening',
+                desc: 'Penyaringan ketat kandidat berdasarkan kriteria spesifik klien. Mencakup evaluasi Good Attitude, Knowledge, Skill, serta validasi administrasi dan fisik.'
+            },
+            'onboarding': {
+                icon: '🌱',
+                title: 'Onboarding Support',
+                desc: 'Memastikan kandidat tidak hanya tersalurkan, tetapi siap bekerja sesuai budaya dan standar operasional perusahaan mitra.'
+            },
+            'strategic': {
+                icon: '👑',
+                title: 'Strategic Partnership',
+                desc: 'Kerjasama rekrutmen jangka panjang untuk memenuhi kebutuhan SDM operasional secara berkelanjutan, stabil, dan terstandarisasi.'
+            }
+        };
+
+        // Core Interaction: Tab Switching
+        function switchTab(tabId) {
+            // Reset buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'text-theraPurple');
+                btn.classList.add('text-gray-500');
+            });
+            // Reset contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+
+            // Activate selected
+            event.currentTarget.classList.remove('text-gray-500');
+            event.currentTarget.classList.add('active', 'text-theraPurple');
+            document.getElementById(`content-${tabId}`).classList.remove('hidden');
+        }
+
+        // Core Interaction: Service Selection Update
+        function updateService(serviceKey) {
+            const data = servicesData[serviceKey];
+            
+            // Update UI styling
+            document.querySelectorAll('.service-card').forEach(card => {
+                card.classList.remove('active', 'border-theraPurple', 'bg-f3e8ff');
+            });
+            event.currentTarget.classList.add('active');
+
+            // Animate content change
+            const titleEl = document.getElementById('service-display-title');
+            const descEl = document.getElementById('service-display-desc');
+            const iconEl = document.getElementById('service-display-icon');
+
+            // Fade out
+            titleEl.style.opacity = 0;
+            descEl.style.opacity = 0;
+            iconEl.style.transform = 'scale(0.8)';
+            iconEl.style.opacity = 0;
+
+            setTimeout(() => {
+                // Update content
+                titleEl.innerText = data.title;
+                descEl.innerText = data.desc;
+                iconEl.innerText = data.icon;
+
+                // Fade in
+                titleEl.style.opacity = 1;
+                descEl.style.opacity = 1;
+                iconEl.style.transform = 'scale(1)';
+                iconEl.style.opacity = 1;
+            }, 200);
+        }
+
+        // Initialize Chart.js Visualization on DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // Render Radar Chart for Candidate Evaluation Matrix
+            const ctx = document.getElementById('selectionRadarChart').getContext('2d');
+            
+            const radarChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: [
+                        'Good Attitude', 
+                        'Knowledge Dasar', 
+                        'Skill Praktikal', 
+                        'Validasi Administrasi', 
+                        'Kesiapan Fisik'
+                    ],
+                    datasets: [{
+                        label: 'Standar Theramatch',
+                        data: [95, 85, 90, 100, 95], // High illustrative scores reflecting "Seleksi Ketat"
+                        backgroundColor: 'rgba(143, 0, 255, 0.2)', // theraPurple with opacity
+                        borderColor: '#8F00FF',
+                        pointBackgroundColor: '#8F00FF',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: '#8F00FF',
+                        borderWidth: 2
+                    }, {
+                        label: 'Rata-rata Industri',
+                        data: [65, 70, 75, 80, 70],
+                        backgroundColor: 'rgba(107, 114, 128, 0.1)', // gray
+                        borderColor: '#9CA3AF',
+                        pointBackgroundColor: '#9CA3AF',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: '#9CA3AF',
+                        borderWidth: 1,
+                        borderDash: [5, 5]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false, // CRITICAL for chart container constraints
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                font: {
+                                    family: "'Inter', sans-serif"
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(30, 30, 47, 0.9)',
+                            titleFont: { family: "'Inter', sans-serif", size: 14 },
+                            bodyFont: { family: "'Inter', sans-serif", size: 13 },
+                            padding: 12,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.r + '%';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(0,0,0,0.05)' },
+                            grid: { color: 'rgba(0,0,0,0.05)' },
+                            pointLabels: {
+                                font: {
+                                    family: "'Inter', sans-serif",
+                                    size: 11,
+                                    weight: 'bold'
+                                },
+                                color: '#4B5563'
+                            },
+                            ticks: {
+                                display: false, // Hide numeric ticks for a cleaner look
+                                min: 0,
+                                max: 100
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Scroll Reveal Animation Logic
+            const revealElements = document.querySelectorAll('.reveal');
+            
+            const revealOnScroll = () => {
+                const windowHeight = window.innerHeight;
+                revealElements.forEach(el => {
+                    const elementTop = el.getBoundingClientRect().top;
+                    const revealPoint = 100; // Offset before revealing
+                    
+                    if (elementTop < windowHeight - revealPoint) {
+                        el.classList.add('active');
+                    }
+                });
+            };
+
+            // Trigger once on load, then on scroll
+            revealOnScroll();
+            window.addEventListener('scroll', revealOnScroll);
+
+            // Add CSS transitions dynamically for interactive elements to ensure smoothness
+            document.getElementById('service-display-title').style.transition = 'opacity 0.2s ease-in-out';
+            document.getElementById('service-display-desc').style.transition = 'opacity 0.2s ease-in-out';
+            document.getElementById('service-display-icon').style.transition = 'all 0.2s ease-in-out';
+        });
+    </script>
+</body>
+</html>
